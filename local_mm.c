@@ -85,7 +85,7 @@ void local_mm(const int m, const int n, const int k, const double alpha,
   }
 
   /* Iterate over the columns of C */
-  for (col = 0; col < n/nthreads; col++) {
+  for (col = 0; col < n; col++) {
 
     /* Iterate over the rows of C */
     for (row = tid * m/nthreads; row < (tid+1) * m/nthreads; row++) {
