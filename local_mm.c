@@ -70,6 +70,7 @@ void local_mm(const int m, const int n, const int k, const double alpha,
   tid = omp_get_thread_num();
   nthreads = omp_get_num_threads();
 
+#ifdef NONO
   if (tid == 1)
   {
   fprintf(stderr, "nthreads=%i, tid*n/nthreads=%i, tid*m/nthreads=%i\n",
@@ -83,6 +84,7 @@ void local_mm(const int m, const int n, const int k, const double alpha,
   fprintf(stderr, "\bMATRIX B=\n");
   print_matrix(m, n, B);
   }
+#endif
 
   /* Iterate over the columns of C */
   for (col = 0; col < n; col++) {
@@ -96,11 +98,13 @@ void local_mm(const int m, const int n, const int k, const double alpha,
       /* Iterate over column of A, row of B */
       for (k_iter = 0; k_iter < k; k_iter++) {
         int a_index, b_index;
+#ifdef NONO
         if (tid == 1)
         {
           fprintf(stderr, "m=%i, n=%i, k=%i, col=%i, row=%i, k_iter=%i\n",
               m, n, k, col, row, k_iter);
         }
+#endif
         a_index = (k_iter * lda) + row; /* Compute index of A element */
         b_index = (col * ldb) + k_iter; /* Compute index of B element */
         dotprod += A[a_index] * B[b_index]; /* Compute product of A and B */
@@ -111,13 +115,10 @@ void local_mm(const int m, const int n, const int k, const double alpha,
     } /* row */
   } /* col */
 
-  if (tid == 1)
-  {
-
-  fprintf(stderr, "MATRIX C=\n");
-  print_matrix(m, n, C);
-  }
-
   } /* end omp parallel */
 
+#ifdef NONO
+  fprintf(stderr, "MATRIX C=\n");
+  print_matrix(m, n, C);
+#endif
 }
