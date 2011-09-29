@@ -19,12 +19,20 @@ all:
 
 LANG = C
 
+LINK_FORTRAN = -lgfortran
+LINK_OPENMP_CC = -fopenmp
+
+LINK_MKL_GCC =
+#LINK_MKL_GCC = -L/opt/intel/Compiler/11.1/059/mkl/lib/em64t/ \
+#	-lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -liomp5 -lpthread
+
+
 
 CC = mpicc
-CFLAGS = -O -Wall -Wextra -lm
+CFLAGS = -O -Wall -Wextra -lm $(LINK_FORTRAN) $(LINK_MKL_GCC) $(LINK_OPENMP_GCC)
 
 FC = mpif90
-FFLAGS = -O
+FFLAGS = -O $(MKL_GCC) $(OPENMP_GCC)
 
 
 
