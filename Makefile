@@ -20,7 +20,7 @@ all:
 LANG = C
 
 LINK_FORTRAN = -lgfortran
-LINK_OPENMP_CC = -fopenmp
+LINK_OPENMP_GCC = -fopenmp
 
 LINK_MKL_GCC =
 #LINK_MKL_GCC = -L/opt/intel/Compiler/11.1/059/mkl/lib/em64t/ \
