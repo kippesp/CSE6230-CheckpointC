@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <mkl.h>
 
 /**
  *
@@ -42,6 +43,7 @@ void local_mm(const int m, const int n, const int k, const double alpha,
   assert(ldb >= k);
   assert(ldc >= m);
   
-  dgemm('N', 'N', m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  const char N = 'N';
+  dgemm(&N, &N, &m, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
 
 }
