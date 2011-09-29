@@ -38,17 +38,26 @@ void local_mm(const int m, const int n, const int k, const double alpha,
     const double beta, double *C, const int ldc) {
 
   int row, col;
+  int tid;
+  int nthreads;
 
   /* Verify the sizes of lda, ladb, and ldc */
   assert(lda >= m);
   assert(ldb >= k);
   assert(ldc >= m);
 
+#pragma omp parallel private(col, row, tid)
+  /* C shared??? */
+  {
+
+  tid = omp_get_thread_num();
+  nthreads = omp_get_num_threads();
+
   /* Iterate over the columns of C */
-  for (col = 0; col < n; col++) {
+  for (col = tid * n/nthreads; col < (tid+1) * n/nthreads; col++) {
 
     /* Iterate over the rows of C */
-    for (row = 0; row < m; row++) {
+    for (row = tid * m/nthreads; row < (tid+1) * m/nthreads; row++) {
 
       int k_iter;
       double dotprod = 0.0; /* Accumulates the sum of the dot-product */
@@ -65,5 +74,7 @@ void local_mm(const int m, const int n, const int k, const double alpha,
       C[c_index] = (alpha * dotprod) + (beta * C[c_index]);
     } /* row */
   } /* col */
+
+  } /* end omp parallel */
 
 }
