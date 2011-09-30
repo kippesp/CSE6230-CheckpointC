@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <omp.h>
 
+#define MIN(a, b)   ((a < b) ? a : b)
 
 static void print_matrix(int rows, int cols, double *mat) {
 
@@ -64,7 +65,6 @@ void local_mm(const int m, const int n, const int k, const double alpha,
   assert(ldc >= m);
 
 #pragma omp parallel private(col, row, tid) shared(C)
-  /* C shared??? */
   {
 
   tid = omp_get_thread_num();
@@ -89,8 +89,19 @@ void local_mm(const int m, const int n, const int k, const double alpha,
   /* Iterate over the columns of C */
   for (col = 0; col < n; col++) {
 
+    /* Spread the computations among the CPUs; the last CPU may get fewer rows. */
+    int row_min = tid * ((float)m/nthreads + 0.5);
+    int row_max = MIN((tid+1) * ((float)m/nthreads + 0.5), m);
+
+#ifdef NONO
+    if (tid==5)
+    {
+      fprintf(stderr, "row_min=%i, row_max=%i\n", row_min, row_max);
+    }
+#endif
+
     /* Iterate over the rows of C */
-    for (row = tid * m/nthreads; row < (tid+1) * m/nthreads; row++) {
+    for (row = row_min; row < row_max; row++) {
 
       int k_iter;
       double dotprod = 0.0; /* Accumulates the sum of the dot-product */
