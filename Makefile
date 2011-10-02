@@ -30,6 +30,7 @@ LINK_MKL_GCC =
 
 CC = mpicc
 CFLAGS = -O -Wall -Wextra -lm $(LINK_FORTRAN) $(LINK_MKL_GCC) $(LINK_OPENMP_GCC)
+#CFLAGS = -O -Wall -Wextra -lm
 
 FC = mpif90
 FFLAGS = -O $(MKL_GCC) $(OPENMP_GCC)
