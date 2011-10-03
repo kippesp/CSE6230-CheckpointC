@@ -56,52 +56,26 @@ void local_mm(const int m, const int n, const int k, const double alpha,
     const double beta, double *C, const int ldc) {
 
   int row, col;
-  int tid;
-  int nthreads;
 
   /* Verify the sizes of lda, ladb, and ldc */
   assert(lda >= m);
   assert(ldb >= k);
   assert(ldc >= m);
 
-#pragma omp parallel private(col, row, tid) shared(C)
-  {
+#define VERSION_2
 
-  tid = omp_get_thread_num();
-  nthreads = omp_get_num_threads();
-
-#ifdef NONO
-  if (tid == 1)
-  {
-  fprintf(stderr, "nthreads=%i, tid*n/nthreads=%i, tid*m/nthreads=%i\n",
-      nthreads, tid*n/nthreads, tid*m/nthreads);
-  fprintf(stderr, "(tid+1)*n/nthreads=%i, (tid+1)*m/nthreads=%i\n",
-      (tid+1)*n/nthreads, (tid+1)*m/nthreads);
-
-  fprintf(stderr, "MATRIX A=\n");
-  print_matrix(m, n, A);
-
-  fprintf(stderr, "\bMATRIX B=\n");
-  print_matrix(m, n, B);
-  }
+#ifdef VERSION_2
+#pragma omp parallel for private(col, row) /* schedule(dynamic, 1) */
 #endif
 
+#ifdef VERSION_3
+#pragma omp parallel for private(col, row) /* schedule(dynamic, 1) */
+#endif
   /* Iterate over the columns of C */
   for (col = 0; col < n; col++) {
 
-    /* Spread the computations among the CPUs; the last CPU may get fewer rows. */
-    int row_min = tid * ((float)m/nthreads + 0.5);
-    int row_max = MIN((tid+1) * ((float)m/nthreads + 0.5), m);
-
-#ifdef NONO
-    if (tid==5)
-    {
-      fprintf(stderr, "row_min=%i, row_max=%i\n", row_min, row_max);
-    }
-#endif
-
     /* Iterate over the rows of C */
-    for (row = row_min; row < row_max; row++) {
+    for (row = 0; row < m; row++) {
 
       int k_iter;
       double dotprod = 0.0; /* Accumulates the sum of the dot-product */
@@ -109,13 +83,6 @@ void local_mm(const int m, const int n, const int k, const double alpha,
       /* Iterate over column of A, row of B */
       for (k_iter = 0; k_iter < k; k_iter++) {
         int a_index, b_index;
-#ifdef NONO
-        if (tid == 1)
-        {
-          fprintf(stderr, "m=%i, n=%i, k=%i, col=%i, row=%i, k_iter=%i\n",
-              m, n, k, col, row, k_iter);
-        }
-#endif
         a_index = (k_iter * lda) + row; /* Compute index of A element */
         b_index = (col * ldb) + k_iter; /* Compute index of B element */
         dotprod += A[a_index] * B[b_index]; /* Compute product of A and B */
@@ -126,10 +93,4 @@ void local_mm(const int m, const int n, const int k, const double alpha,
     } /* row */
   } /* col */
 
-  } /* end omp parallel */
-
-#ifdef NONO
-  fprintf(stderr, "MATRIX C=\n");
-  print_matrix(m, n, C);
-#endif
 }
