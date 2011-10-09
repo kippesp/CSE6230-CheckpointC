@@ -127,8 +127,9 @@ local_mm_wrapper.o : local_mm_wrapper.c
 .PHONY : unittest_mm
 	
 clean : clean-pbs
-	rm -f unittest_mm unittest_summa time_mm_original time_summa
-	rm -f time_mm_mkl time_mm_openmp
+	rm -f unittest_mm unittest_summa time_summa
+	rm -f time_mm_mkl time_mm_openmp time_mm_original time_mm_blocking
+	rm -f unittest_mm_original unittest_mm_mkl unittest_mm_openmp unittest_mm_blocking
 	rm -f *.o
 	rm -f turnin.tar.gz
 
