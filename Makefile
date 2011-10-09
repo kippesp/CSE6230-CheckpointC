@@ -6,7 +6,9 @@ all:
 	@echo ""
 	@echo "        unittest_mm : Build matrix multiply unittests"
 	@echo "     unittest_summa : Build summa unittests"
-	@echo "            time_mm : Build program to time local_mm"
+	@echo "   time_mm_original : Build program to time local_mm (original)"
+	@echo "     time_mm_openmp : Build program to time local_mm (open MP)"
+	@echo "        time_mm_mkl : Build program to time local_mm (Intel MKL)"
 	@echo "         time_summa : Build program to time summa"
 	@echo "   run--unittest_mm : Submit unittest_mm job"
 	@echo "run--unittest_summa : Submit unittest_summa job"
@@ -19,38 +21,33 @@ all:
 
 LANG = C
 
-LINK_FORTRAN = -lgfortran
 LINK_OPENMP_GCC = -fopenmp
-
-LINK_MKL_GCC =
-#LINK_MKL_GCC = -L/opt/intel/Compiler/11.1/059/mkl/lib/em64t/ \
-#	-lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -liomp5 -lpthread
+LINK_MKL_GCC = -L/opt/intel/Compiler/11.1/059/mkl/lib/em64t/ \
+	-lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -liomp5 -lpthread
 
 
 
 CC = mpicc
-CFLAGS = -O -Wall -Wextra -lm $(LINK_FORTRAN) $(LINK_MKL_GCC) $(LINK_OPENMP_GCC)
-#CFLAGS = -O -Wall -Wextra -lm
+CFLAGS_OPENMP = -O -Wall -Wextra -lm $(LINK_OPENMP_GCC)
+CFLAGS_MKL = -O -Wall -Wextra -lm $(LINK_MKL_GCC)
+CFLAGS = -O -Wall -Wextra -lm
 
 FC = mpif90
 FFLAGS = -O $(MKL_GCC) $(OPENMP_GCC)
 
 
 
-ifeq ($(LANG),C)
 MM = local_mm.o
 SUMMA = summa.o
-else
-MM = local_mm.o local_mm_wrapper.o
-SUMMA = summa.o summa_wrapper.o
-endif
 
-local_mm.o : local_mm.c local_mm.f90 local_mm.h
-ifeq ($(LANG),C)
+local_mm_original.o : local_mm.c local_mm.f90 local_mm.h
 	$(CC) $(CFLAGS) -o $@ -c local_mm.c
-else
-	$(FC) $(FFLAGS) -o $@ -c local_mm.f90
-endif
+
+local_mm_openmp.o : local_mm.c local_mm.f90 local_mm.h
+	$(CC) $(CFLAGS_OPENMP) -DUSE_OPEN_MP -o $@ -c local_mm.c
+
+local_mm_mkl.o : local_mm.c local_mm.f90 local_mm.h
+	$(CC) $(CFLAGS_MKL) -DUSE_MKL -o $@ -c local_mm.c
 
 matrix_utils.o : matrix_utils.c matrix_utils.h
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -58,8 +55,16 @@ matrix_utils.o : matrix_utils.c matrix_utils.h
 unittest_mm : unittest_mm.c matrix_utils.o $(MM)
 	$(CC) $(CFLAGS) -o $@ $^
 
-time_mm : time_mm.c matrix_utils.o $(MM)
+time_mm_original : time_mm.c matrix_utils.o local_mm_original.o
 	$(CC) $(CFLAGS) -o $@ $^
+
+time_mm_openmp : time_mm.c matrix_utils.o local_mm_openmp.o
+	$(CC) $(CFLAGS_OPENMP) -o $@ $^
+
+time_mm_mkl : time_mm.c matrix_utils.o local_mm_mkl.o
+	$(CC) $(CFLAGS_MKL) -o $@ $^
+
+time_mm : time_mm_original time_mm_openmp time_mm_mkl
 
 unittest_summa : matrix_utils.o $(MM) $(SUMMA) unittest_summa.o
 ifeq ($(LANG),C)
@@ -97,9 +102,11 @@ local_mm_wrapper.o : local_mm_wrapper.c
 
 .PHONY : clean
 .PHONY : clean-pbs
+.PHONY : time_mm
 	
 clean : clean-pbs
-	rm -f unittest_mm unittest_summa time_mm time_summa
+	rm -f unittest_mm unittest_summa time_mm_original time_summa
+	rm -f time_mm_mkl time_mm_openmp
 	rm -f *.o
 	rm -f turnin.tar.gz
 

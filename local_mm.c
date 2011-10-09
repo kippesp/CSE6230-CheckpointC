@@ -7,7 +7,14 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <omp.h>
+
+#ifdef USE_OPEN_MP
+# include <omp.h>
+#endif
+
+#ifdef USE_MKL
+# include <mkl.h>
+#endif
 
 #define MIN(a, b)   ((a < b) ? a : b)
 
@@ -38,7 +45,7 @@ static void print_matrix(int rows, int cols, double *mat) {
  *  alpha and beta are double-precision scalars
  *
  *  A, B, and C are matrices of double-precision elements
- *  stored in column-major format 
+ *  stored in column-major format
  *
  *  The output is stored in C
  *  A and B are not modified during computation
@@ -47,7 +54,7 @@ static void print_matrix(int rows, int cols, double *mat) {
  *  m - number of rows of matrix A and rows of C
  *  n - number of columns of matrix B and columns of C
  *  k - number of columns of matrix A and rows of B
- * 
+ *
  *  lda, ldb, and ldc specifies the size of the first dimension of the matrices
  *
  **/
@@ -62,15 +69,14 @@ void local_mm(const int m, const int n, const int k, const double alpha,
   assert(ldb >= k);
   assert(ldc >= m);
 
-#define VERSION_2
-
-#ifdef VERSION_2
-#pragma omp parallel for private(col, row) /* schedule(dynamic, 1) */
+#ifdef USE_OPEN_MP
+# pragma omp parallel for private(col, row) /* schedule(dynamic, 1) */
 #endif
 
-#ifdef VERSION_3
-#pragma omp parallel for private(col, row) /* schedule(dynamic, 1) */
-#endif
+#ifdef USE_MKL
+  const char N = 'N';
+  dgemm(&N, &N, &m, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
+#else
   /* Iterate over the columns of C */
   for (col = 0; col < n; col++) {
 
@@ -92,5 +98,6 @@ void local_mm(const int m, const int n, const int k, const double alpha,
       C[c_index] = (alpha * dotprod) + (beta * C[c_index]);
     } /* row */
   } /* col */
+#endif
 
 }
