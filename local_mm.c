@@ -76,12 +76,12 @@ void local_mm(const int m, const int n, const int k, const double alpha,
 # ifdef USE_BLOCKING
 
   /*
-   * Z = 8 GB = 8 * 1024^3
-   * b = sqrt(X) = 92681.9
+   * Z = 256 KB = 256 * 1024 = 262144
+   * b = sqrt(X) = 512
    * sizeof(double) = 8
    *
    * n = 1024
-   * m = n^3 / b = 11585.2
+   * m = n^3 / b = 2097152
    *
    *
    *
