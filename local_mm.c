@@ -75,6 +75,18 @@ void local_mm(const int m, const int n, const int k, const double alpha,
 #else
 # ifdef USE_BLOCKING
 
+  /*
+   * Z = 8 GB = 8 * 1024^3
+   * b = sqrt(X) = 92681.9
+   * sizeof(double) = 8
+   *
+   * n = 1024
+   * m = n^3 / b = 11585.2
+   *
+   *
+   *
+   */
+
 
 #pragma omp parallel private(col, row) shared(C)
   {
